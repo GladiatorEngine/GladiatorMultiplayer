@@ -9,7 +9,7 @@
 
 char* send_nat_pmp(uint16_t internal_port, uint16_t requested_external_port, const char* gateway, enum MappingProtocol mapping_protocol, uint32_t lifetime) {
     int sfd = socket(AF_INET, SOCK_DGRAM, 0);
-    char buf[MAX_LINE];
+    char buf[PMP_REQUEST_SIZE];
     memset(buf, 0, sizeof(buf)); // zeroing buffer
     
     // Build packet
@@ -35,9 +35,9 @@ char* send_nat_pmp(uint16_t internal_port, uint16_t requested_external_port, con
     
     sendto(sfd, buf, strlen(buf), 0, (const struct sockaddr *) &servaddr, sizeof(servaddr));
     
-    char* rbuf = malloc(sizeof(char[MAX_LINE]));
+    char* rbuf = malloc(sizeof(char[PMP_RESPONSE_SIZE]));
     socklen_t len;
-    recvfrom(sfd, rbuf, MAX_LINE, MSG_WAITALL, (struct sockaddr *) &servaddr, &len);
+    recvfrom(sfd, rbuf, PMP_RESPONSE_SIZE, MSG_WAITALL, (struct sockaddr *) &servaddr, &len);
     
     close(sfd);
     

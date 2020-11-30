@@ -18,7 +18,8 @@
 #include <arpa/inet.h>
 #include <netinet/in.h>
 
-#define MAX_LINE 1024
+#define PMP_REQUEST_SIZE 12
+#define PMP_RESPONSE_SIZE 16
 #define NAT_PMP_PORT 5351
 #define NAT_PMP_LIFETIME 86400 // one day - 24 hours
 
