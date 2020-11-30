@@ -36,7 +36,7 @@ char* send_nat_pmp(uint16_t internal_port, uint16_t requested_external_port, con
     sendto(sfd, buf, strlen(buf), 0, (const struct sockaddr *) &servaddr, sizeof(servaddr));
     
     char* rbuf = malloc(sizeof(char[MAX_LINE]));
-    socklen_t n, len;
+    socklen_t len;
     recvfrom(sfd, rbuf, MAX_LINE, MSG_WAITALL, (struct sockaddr *) &servaddr, &len);
     
     close(sfd);
