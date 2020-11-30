@@ -27,6 +27,15 @@ enum MappingProtocol {
     TCP = 2
 };
 
+typedef struct {
+    uint8_t opcode;
+    uint16_t resultCode;
+    uint32_t epochTime;
+    uint16_t internalPort;
+    uint16_t externalPort;
+    uint32_t lifetime;
+} NATPMPResponse;
+
 uint16_t nat_map_external_port(uint16_t internal_port, uint16_t requested_external_port, const char* gateway, enum MappingProtocol mapping_protocol);
 
 bool nat_pmp_disable_mapping(uint16_t internal_port, uint16_t requested_external_port, const char* gateway, enum MappingProtocol mapping_protocol);

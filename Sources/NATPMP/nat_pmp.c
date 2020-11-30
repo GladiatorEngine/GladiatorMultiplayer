@@ -16,15 +16,15 @@ char* send_nat_pmp(uint16_t internal_port, uint16_t requested_external_port, con
     buf[1] = (int)mapping_protocol; // Protocol: 1 - UDP, 2 - TCP
     // Internal port
     buf[5] = internal_port & 0xFF;
-    buf[6] = internal_port >> 8;
+    buf[4] = internal_port >> 8;
     // External port
     buf[7] = requested_external_port & 0xFF;
-    buf[8] = requested_external_port >> 8;
+    buf[6] = requested_external_port >> 8;
     // Lifetime
-    buf[9] =  (lifetime >> 0) & 0xFF;
+    buf[11] =  (lifetime >> 0) & 0xFF;
     buf[10] = (lifetime >> 8) & 0xFF;
-    buf[11] = (lifetime >> 16) & 0xFF;
-    buf[12] = (lifetime >> 24) & 0xFF;
+    buf[9] = (lifetime >> 16) & 0xFF;
+    buf[8] = (lifetime >> 24) & 0xFF;
     // End build packet
     
     struct sockaddr_in servaddr;
@@ -37,22 +37,43 @@ char* send_nat_pmp(uint16_t internal_port, uint16_t requested_external_port, con
     
     char* rbuf = malloc(sizeof(char[MAX_LINE]));
     socklen_t n, len;
-    n = recvfrom(sfd, rbuf, MAX_LINE, MSG_WAITALL, (struct sockaddr *) &servaddr, &len);
-    rbuf[n] = '\0';
+    recvfrom(sfd, rbuf, MAX_LINE, MSG_WAITALL, (struct sockaddr *) &servaddr, &len);
     
     close(sfd);
     
     return rbuf;
 }
 
+NATPMPResponse* parse_nat_pmp_response(const char* rbuf, enum MappingProtocol mapping_protocol) {
+    NATPMPResponse* r = malloc(sizeof(NATPMPResponse));
+    
+    r->opcode = rbuf[1];
+    r->resultCode = (unsigned char)(rbuf[3]) << 8 |
+                    (unsigned char)(rbuf[2]);
+    r->epochTime = (unsigned char)(rbuf[7]) << 24 |
+                   (unsigned char)(rbuf[6]) << 16 |
+                   (unsigned char)(rbuf[5]) << 8 |
+                   (unsigned char)(rbuf[4]);
+    r->internalPort = (unsigned char)(rbuf[9]) << 8 |
+                      (unsigned char)(rbuf[8]);
+    r->externalPort = (unsigned char)(rbuf[11]) << 8 |
+                      (unsigned char)(rbuf[10]);
+    r->lifetime = (unsigned char)(rbuf[15]) << 24 |
+                  (unsigned char)(rbuf[14]) << 16 |
+                  (unsigned char)(rbuf[13]) << 8 |
+                  (unsigned char)(rbuf[12]);
+    
+    return r;
+}
+
 uint16_t nat_map_external_port(uint16_t internal_port, uint16_t requested_external_port, const char* gateway, enum MappingProtocol mapping_protocol) {
     char* rbuf = send_nat_pmp(internal_port, requested_external_port, gateway, mapping_protocol, NAT_PMP_LIFETIME);
-    printf("Server : %s\n", rbuf);
-    return 0;
+    NATPMPResponse* r = parse_nat_pmp_response(rbuf, mapping_protocol);
+    return r->externalPort;
 }
 
 bool nat_pmp_disable_mapping(uint16_t internal_port, uint16_t requested_external_port, const char* gateway, enum MappingProtocol mapping_protocol) {
     char* rbuf = send_nat_pmp(internal_port, requested_external_port, gateway, mapping_protocol, 0);
-    printf("Server : %s\n", rbuf);
-    return false;
+    NATPMPResponse* r = parse_nat_pmp_response(rbuf, mapping_protocol);
+    return r->opcode == (uint8_t)mapping_protocol+128;
 }
