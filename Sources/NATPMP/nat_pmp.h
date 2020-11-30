@@ -37,8 +37,20 @@ typedef struct {
     uint32_t lifetime;
 } NATPMPResponse;
 
+/// Maps external port to internal port in NAT network
+/// @param internal_port internal port of the socket
+/// @param requested_external_port suggested external port
+/// @param gateway gateway's IPv4 as string
+/// @param mapping_protocol one of MappingProtocols
+/// @return external port or 0 if something goes wrong (also logs error to console)
 uint16_t nat_map_external_port(uint16_t internal_port, uint16_t requested_external_port, const char* gateway, enum MappingProtocol mapping_protocol);
 
+/// Removes mapping to internal port in NAT network
+/// @param internal_port internal port of the socket
+/// @param requested_external_port suggested external port
+/// @param gateway gateway's IPv4 as string
+/// @param mapping_protocol one of MappingProtocols
+/// @return true if everything is fine, false if something goes wrong
 bool nat_pmp_disable_mapping(uint16_t internal_port, uint16_t requested_external_port, const char* gateway, enum MappingProtocol mapping_protocol);
 
 #endif /* File_h */

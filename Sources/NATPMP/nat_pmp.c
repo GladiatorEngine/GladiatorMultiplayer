@@ -69,6 +69,32 @@ NATPMPResponse* parse_nat_pmp_response(const char* rbuf, enum MappingProtocol ma
 uint16_t nat_map_external_port(uint16_t internal_port, uint16_t requested_external_port, const char* gateway, enum MappingProtocol mapping_protocol) {
     char* rbuf = send_nat_pmp(internal_port, requested_external_port, gateway, mapping_protocol, NAT_PMP_LIFETIME);
     NATPMPResponse* r = parse_nat_pmp_response(rbuf, mapping_protocol);
+    if (r->resultCode != 0) {
+        switch (r->resultCode) {
+            case 1:
+                printf("Unsupported Version");
+                break;
+            case 2:
+                printf("Not Authorized/Refused (e.g., box supports mapping, but user has turned feature off)");
+                break;
+            case 3:
+                printf("Network Failure (e.g., NAT box itself has not obtained a DHCP lease)");
+                break;
+            case 4:
+                printf("Out of resources (NAT box cannot create any more mappings at this time)");
+                break;
+            case 5:
+                printf("Unsupported opcode");
+                break;
+            default:
+                break;
+        }
+        return 0;
+    }
+    if (r->opcode != (uint8_t)mapping_protocol+128) {
+        printf("Invalid opcode in response");
+        return 0;
+    }
     return r->externalPort;
 }
 
