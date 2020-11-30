@@ -23,8 +23,8 @@
 #define NAT_PMP_LIFETIME 86400 // one day - 24 hours
 
 enum MappingProtocol {
-    TCP = 0x00,
-    UDP = 0x01
+    TCP = 1,
+    UDP = 2
 };
 
 int16_t nat_map_external_port(int16_t internal_port, int16_t requested_external_port, const char* gateway, enum MappingProtocol mapping_protocol);
