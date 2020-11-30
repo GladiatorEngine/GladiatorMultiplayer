@@ -13,13 +13,13 @@ char* send_nat_pmp(uint16_t internal_port, uint16_t requested_external_port, con
     memset(buf, 0, sizeof(buf)); // zeroing buffer
     
     // Build packet
-    buf[1] = (int)mapping_protocol; // Protocol: 1 - UDP, 2 - TCP
+    buf[1] = (uint8_t)mapping_protocol; // Protocol: 1 - UDP, 2 - TCP
     // Internal port
-    buf[5] = internal_port & 0xFF;
-    buf[4] = internal_port >> 8;
+    buf[5] = (internal_port >> 0) & 0xFF;
+    buf[4] = (internal_port >> 8) & 0xFF;
     // External port
-    buf[7] = requested_external_port & 0xFF;
-    buf[6] = requested_external_port >> 8;
+    buf[7] = (requested_external_port >> 0) & 0xFF;
+    buf[6] = (requested_external_port >> 8) & 0xFF;
     // Lifetime
     buf[11] =  (lifetime >> 0) & 0xFF;
     buf[10] = (lifetime >> 8) & 0xFF;
