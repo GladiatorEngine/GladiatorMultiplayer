@@ -7,7 +7,7 @@
 
 #include "nat_pmp.h"
 
-char* send_nat_pmp_fmem(uint16_t internal_port, uint16_t requested_external_port, const char* gateway, enum MappingProtocol mapping_protocol, uint32_t lifetime) {
+char* send_nat_pmp(uint16_t internal_port, uint16_t requested_external_port, const char* gateway, enum MappingProtocol mapping_protocol, uint32_t lifetime) {
     int sfd = socket(AF_INET, SOCK_DGRAM, 0);
     
     char buf[PMP_REQUEST_SIZE];
@@ -20,43 +20,6 @@ char* send_nat_pmp_fmem(uint16_t internal_port, uint16_t requested_external_port
     fwrite(ntohs(lifetime), sizeof(uint32_t), 1, file);
     
     fclose(file);
-    
-    struct sockaddr_in servaddr;
-    memset(&servaddr, 0, sizeof(servaddr));
-    servaddr.sin_family = AF_INET;
-    servaddr.sin_port = htons(NAT_PMP_PORT);
-    inet_pton(AF_INET, gateway, &(servaddr.sin_addr));
-    
-    sendto(sfd, buf, strlen(buf), 0, (const struct sockaddr *) &servaddr, sizeof(servaddr));
-    
-    char* rbuf = malloc(sizeof(char[PMP_RESPONSE_SIZE]));
-    socklen_t len;
-    recvfrom(sfd, rbuf, PMP_RESPONSE_SIZE, MSG_WAITALL, (struct sockaddr *) &servaddr, &len);
-    
-    close(sfd);
-    
-    return rbuf;
-}
-
-char* send_nat_pmp(uint16_t internal_port, uint16_t requested_external_port, const char* gateway, enum MappingProtocol mapping_protocol, uint32_t lifetime) {
-    int sfd = socket(AF_INET, SOCK_DGRAM, 0);
-    char buf[PMP_REQUEST_SIZE];
-    memset(buf, 0, sizeof(buf)); // zeroing buffer
-    
-    // Build packet
-    buf[1] = (uint8_t)mapping_protocol; // Protocol: 1 - UDP, 2 - TCP
-    // Internal port
-    buf[5] = (internal_port >> 0) & 0xFF;
-    buf[4] = (internal_port >> 8) & 0xFF;
-    // External port
-    buf[7] = (requested_external_port >> 0) & 0xFF;
-    buf[6] = (requested_external_port >> 8) & 0xFF;
-    // Lifetime
-    buf[11] =  (lifetime >> 0) & 0xFF;
-    buf[10] = (lifetime >> 8) & 0xFF;
-    buf[9] = (lifetime >> 16) & 0xFF;
-    buf[8] = (lifetime >> 24) & 0xFF;
-    // End build packet
     
     struct sockaddr_in servaddr;
     memset(&servaddr, 0, sizeof(servaddr));
