@@ -14,10 +14,11 @@ char* send_nat_pmp(uint16_t internal_port, uint16_t requested_external_port, con
     FILE* file = fmemopen(&buf, sizeof(buf), "w");
     
     fsetpos(file, 1);
-    fwrite(ntohs((uint8_t)mapping_protocol), sizeof(uint8_t), 1, file);
-    fwrite(ntohs(internal_port), sizeof(uint16_t), 1, file);
-    fwrite(ntohs(requested_external_port), sizeof(uint16_t), 1, file);
-    fwrite(ntohs(lifetime), sizeof(uint32_t), 1, file);
+    fwrite((uint8_t)mapping_protocol, sizeof(uint8_t), 1, file);
+    fsetpos(file, 4);
+    fwrite(htons(internal_port), sizeof(uint16_t), 1, file);
+    fwrite(htons(requested_external_port), sizeof(uint16_t), 1, file);
+    fwrite(htonl(lifetime), sizeof(uint32_t), 1, file);
     
     fclose(file);
     
@@ -41,21 +42,20 @@ char* send_nat_pmp(uint16_t internal_port, uint16_t requested_external_port, con
 NATPMPResponse* parse_nat_pmp_response(const char* rbuf, enum MappingProtocol mapping_protocol) {
     NATPMPResponse* r = malloc(sizeof(NATPMPResponse));
     
-    r->opcode = rbuf[1];
-    r->resultCode = (unsigned char)(rbuf[3]) << 8 |
-                    (unsigned char)(rbuf[2]);
-    r->epochTime = (unsigned char)(rbuf[7]) << 24 |
-                   (unsigned char)(rbuf[6]) << 16 |
-                   (unsigned char)(rbuf[5]) << 8 |
-                   (unsigned char)(rbuf[4]);
-    r->internalPort = (unsigned char)(rbuf[9]) << 8 |
-                      (unsigned char)(rbuf[8]);
-    r->externalPort = (unsigned char)(rbuf[11]) << 8 |
-                      (unsigned char)(rbuf[10]);
-    r->lifetime = (unsigned char)(rbuf[15]) << 24 |
-                  (unsigned char)(rbuf[14]) << 16 |
-                  (unsigned char)(rbuf[13]) << 8 |
-                  (unsigned char)(rbuf[12]);
+    FILE* file = fmemopen(&rbuf, sizeof(rbuf), "r");
+    
+    fsetpos(file, 1);
+    fread(r->opcode, sizeof(uint8_t), 1, file);
+    fread(r->resultCode, sizeof(uint16_t), 1, file);
+    r->resultCode = ntohs(r->resultCode);
+    fread(r->epochTime, sizeof(uint32_t), 1, file);
+    r->epochTime = ntohl(r->resultCode);
+    fread(r->internalPort, sizeof(uint16_t), 1, file);
+    r->internalPort = ntohs(r->internalPort);
+    fread(r->externalPort, sizeof(uint16_t), 1, file);
+    r->externalPort = ntohs(r->externalPort);
+    fread(r->lifetime, sizeof(uint32_t), 1, file);
+    r->lifetime = ntohl(r->lifetime);
     
     return r;
 }
