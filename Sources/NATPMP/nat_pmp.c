@@ -7,6 +7,37 @@
 
 #include "nat_pmp.h"
 
+char* send_nat_pmp_fmem(uint16_t internal_port, uint16_t requested_external_port, const char* gateway, enum MappingProtocol mapping_protocol, uint32_t lifetime) {
+    int sfd = socket(AF_INET, SOCK_DGRAM, 0);
+    
+    char buf[PMP_REQUEST_SIZE];
+    FILE* file = fmemopen(&buf, sizeof(buf), "w");
+    
+    fsetpos(file, 1);
+    fwrite(ntohs((uint8_t)mapping_protocol), sizeof(uint8_t), 1, file);
+    fwrite(ntohs(internal_port), sizeof(uint16_t), 1, file);
+    fwrite(ntohs(requested_external_port), sizeof(uint16_t), 1, file);
+    fwrite(ntohs(lifetime), sizeof(uint32_t), 1, file);
+    
+    fclose(file);
+    
+    struct sockaddr_in servaddr;
+    memset(&servaddr, 0, sizeof(servaddr));
+    servaddr.sin_family = AF_INET;
+    servaddr.sin_port = htons(NAT_PMP_PORT);
+    inet_pton(AF_INET, gateway, &(servaddr.sin_addr));
+    
+    sendto(sfd, buf, strlen(buf), 0, (const struct sockaddr *) &servaddr, sizeof(servaddr));
+    
+    char* rbuf = malloc(sizeof(char[PMP_RESPONSE_SIZE]));
+    socklen_t len;
+    recvfrom(sfd, rbuf, PMP_RESPONSE_SIZE, MSG_WAITALL, (struct sockaddr *) &servaddr, &len);
+    
+    close(sfd);
+    
+    return rbuf;
+}
+
 char* send_nat_pmp(uint16_t internal_port, uint16_t requested_external_port, const char* gateway, enum MappingProtocol mapping_protocol, uint32_t lifetime) {
     int sfd = socket(AF_INET, SOCK_DGRAM, 0);
     char buf[PMP_REQUEST_SIZE];
