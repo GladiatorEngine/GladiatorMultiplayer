@@ -56,6 +56,7 @@ NATPMPResponse* parse_nat_pmp_response(const char* rbuf, enum MappingProtocol ma
     r->externalPort = ntohs(r->externalPort);
     fread(r->lifetime, sizeof(uint32_t), 1, file);
     r->lifetime = ntohl(r->lifetime);
+    fclose(file);
     
     return r;
 }
